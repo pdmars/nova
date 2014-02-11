@@ -448,6 +448,16 @@ class ComputeDriver(object):
         """
         raise NotImplementedError()
 
+    def get_blockdev(self, instance, connection_info):
+        # TODO(pdmars): currently just in the openvz driver:
+        # https://github.com/stackforge/openvz-nova-driver/
+        raise NotImplementedError()
+
+    def rescan_volume(self, instance, connection_info):
+        # TODO(pdmars): currently just in the openvz driver:
+        # https://github.com/stackforge/openvz-nova-driver/
+        raise NotImplementedError()
+
     def migrate_disk_and_power_off(self, context, instance, dest,
                                    flavor, network_info,
                                    block_device_info=None):

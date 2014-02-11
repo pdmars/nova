@@ -816,3 +816,15 @@ class ComputeRpcAPITestCase(test.TestCase):
                                instances=[self.fake_instance],
                                events=['event'],
                                version='3.23')
+
+    def test_rescan_volume(self):
+        self._test_compute_api('rescan_volume', 'cast',
+                               instance=self.fake_instance,
+                               volume_id='fake_id',
+                               version='3.24')
+
+    def test_get_volume_blockdev(self):
+        self._test_compute_api('get_volume_blockdev', 'call',
+                               instance=self.fake_instance,
+                               volume_id='fake_id',
+                               version='3.24')

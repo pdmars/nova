@@ -696,6 +696,45 @@ class SnapshotController(wsgi.Controller):
         return {'snapshot': retval}
 
 
+class OnlineExtendController(wsgi.Controller):
+    """Support for online volume extending from Cinder."""
+
+    def __init__(self):
+        self.compute_api = compute.API()
+        super(OnlineExtendController, self).__init__()
+
+    def show(self, req, server_id, id):
+        """Get volume block device information."""
+        context = req.environ['nova.context']
+        authorize(context)
+
+        try:
+            instance = self.compute_api.get(context, server_id)
+        except exception.NotFound:
+            raise exc.HTTPNotFound()
+
+        blockdev_bytes = self.compute_api.get_volume_blockdev(context,
+                                                              instance,
+                                                              id)
+        return {'volume_blockdev': {'id': id, 'bytes': blockdev_bytes}}
+
+    def update(self, req, server_id, body):
+        """Rescan the volume."""
+        context = req.environ['nova.context']
+        authorize(context)
+
+        volume_id = body['volume_id']
+
+        try:
+            instance = self.compute_api.get(context, server_id)
+        except exception.NotFound:
+            raise exc.HTTPNotFound()
+
+        self.compute_api.rescan_volume(context, instance, volume_id)
+
+        return webob.Response(status_int=202)
+
+
 class Volumes(extensions.ExtensionDescriptor):
     """Volumes support."""
 
@@ -720,6 +759,14 @@ class Volumes(extensions.ExtensionDescriptor):
                                            parent=dict(
                                                 member_name='server',
                                                 collection_name='servers'))
+        resources.append(res)
+
+        res = extensions.ResourceExtension('os-online_extend_volume',
+                                           OnlineExtendController(),
+                                           parent={'member_name': 'server',
+                                                'collection_name': 'servers'},
+                                           collection_actions={'update': 'PUT',
+                                                               'show': 'GET'})
         resources.append(res)
 
         res = extensions.ResourceExtension('os-volumes_boot',

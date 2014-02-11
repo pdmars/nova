@@ -565,7 +565,7 @@ class ComputeVirtAPI(virtapi.VirtAPI):
 class ComputeManager(manager.Manager):
     """Manages the running instances from creation to destruction."""
 
-    target = messaging.Target(version='3.23')
+    target = messaging.Target(version='3.24')
 
     def __init__(self, compute_driver=None, *args, **kwargs):
         """Load configuration options and connect to the hypervisor."""
@@ -3404,6 +3404,36 @@ class ComputeManager(manager.Manager):
         else:
             # not re-scheduling
             raise exc_info[0], exc_info[1], exc_info[2]
+
+    def get_volume_blockdev(self, context, instance, volume_id):
+        block_device_info = self._get_instance_volume_block_device_info(
+            context, instance)
+        LOG.debug(_("block_device_info: %s") % block_device_info)
+        connection_info = None
+        for bdm in block_device_info['block_device_mapping']:
+            if bdm.volume_id == volume_id:
+                connection_info = bdm['connection_info']
+        if connection_info:
+            block_dev = self.driver.get_blockdev(instance, connection_info)
+            return block_dev
+        else:
+            LOG.error(_("Error trying to get volume %(id)s block device size, "
+                      "no volume connection_info found.") % {
+                      'id': volume_id})
+
+    def rescan_volume(self, context, instance, volume_id):
+        block_device_info = self._get_instance_volume_block_device_info(
+            context, instance)
+        LOG.debug(_("block_device_info: %s") % block_device_info)
+        connection_info = None
+        for bdm in block_device_info['block_device_mapping']:
+            if bdm.volume_id == volume_id:
+                connection_info = bdm['connection_info']
+        if connection_info:
+            self.driver.rescan_volume(instance, connection_info)
+        else:
+            LOG.error(_("Error trying to rescan volume %(id)s, no volume "
+                      "connection_info found.") % {'id': volume_id})
 
     @wrap_exception()
     @reverts_task_state

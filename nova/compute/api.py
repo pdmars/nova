@@ -2935,6 +2935,18 @@ class API(base.Base):
                                                      diff=diff)
         return _metadata
 
+    @wrap_check_policy
+    def get_volume_blockdev(self, context, instance, volume_id):
+        return self.compute_rpcapi.get_volume_blockdev(context,
+                                                       instance,
+                                                       volume_id)
+
+    @wrap_check_policy
+    def rescan_volume(self, context, instance, volume_id):
+        self.compute_rpcapi.rescan_volume(context,
+                                          instance=instance,
+                                          volume_id=volume_id)
+
     def get_instance_faults(self, context, instances):
         """Get all faults for a list of instance uuids."""
 

@@ -916,3 +916,45 @@ class AssistedSnapshotDeleteTestCase(test.TestCase):
         req.method = 'DELETE'
         self.assertRaises(webob.exc.HTTPBadRequest, self.controller.delete,
                 req, '5')
+
+
+class OnlineExtendTestCase(test.TestCase):
+    def setUp(self):
+        super(OnlineExtendTestCase, self).setUp()
+
+        self.volume_id = 'fakeVolId'
+        self.volume_bytes = 4096
+        self.controller = volumes.OnlineExtendController()
+        self.context = context.get_admin_context()
+        self.stubs.Set(compute_api.API, 'get', fake_get_instance)
+        self.stubs.Set(compute_api.API, 'get_volume_blockdev',
+                       self._fake_get_volume_blockdev)
+        self.stubs.Set(compute_api.API, 'rescan_volume',
+                       self._fake_rescan_volume)
+
+    def _fake_rescan_volume(self, context, instance, id):
+        pass
+
+    def _fake_get_volume_blockdev(self, context, instance, id):
+        return self.volume_bytes
+
+    def test_get_volume_blockdev(self):
+        resource = 'servers/fake/os-online_extend_volume'
+        req = webob.Request.blank(resource)
+        req.environ['nova.context'] = self.context
+        resp = self.controller.show(req, FAKE_UUID, self.volume_id)
+        expected = {
+            'volume_blockdev': {
+                'bytes': self.volume_bytes,
+                'id': self.volume_id
+                }
+            }
+        self.assertEqual(resp, expected)
+
+    def test_rescan_volume(self):
+        resource = 'servers/fake/os-online_extend_volume'
+        req = webob.Request.blank(resource)
+        req.environ['nova.context'] = self.context
+        body = {'volume_id': self.volume_id}
+        resp = self.controller.update(req, FAKE_UUID, body)
+        self.assertEqual(resp.status_int, 202)

@@ -241,6 +241,7 @@ class ComputeAPI(object):
         3.21 - Made rebuild take new-world BDM objects
         3.22 - Made terminate_instance take new-world BDM objects
         3.23 - Added external_instance_event()
+        3.24 - Adds get_volume_blockdev and rescan_volume
     '''
 
     VERSION_ALIASES = {
@@ -968,6 +969,19 @@ class ComputeAPI(object):
         cctxt.cast(ctxt, 'external_instance_event', instances=instances,
                    events=events)
 
+    def rescan_volume(self, ctxt, instance, volume_id):
+        cctxt = self.client.prepare(
+            server=_compute_host(None, instance),
+            version='3.24')
+        cctxt.cast(ctxt, 'rescan_volume', instance=instance, 
+                   volume_id=volume_id)
+
+    def get_volume_blockdev(self, ctxt, instance, volume_id):
+        cctxt = self.client.prepare(
+            server=_compute_host(None, instance),
+            version='3.24')
+        return cctxt.call(ctxt, 'get_volume_blockdev', instance=instance,
+                          volume_id=volume_id)
 
 class SecurityGroupAPI(object):
     '''Client side of the security group rpc API.
